@@ -1,0 +1,461 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>joschyd - yet another watchdog daemon - is watching your systems with the real power of perl.</title>
+<link rev="made" href="mailto:" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<ul>
+
+		<li><a href="#unix_linux">Unix/Linux</a></li>
+		<li><a href="#win32">Win32</a></li>
+	</ul>
+
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#configfile_directives">CONFIG-FILE DIRECTIVES</a></li>
+	<ul>
+
+		<li><a href="#daemon_specific">Daemon specific</a></li>
+		<li><a href="#job_specific">Job specific</a></li>
+	</ul>
+
+	<li><a href="#diagnostics">DIAGNOSTICS</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<ul>
+
+		<li><a href="#general">General</a></li>
+		<li><a href="#sample_process">Sample Process</a></li>
+		<li><a href="#oracle_alert_logfile">Oracle Alert Logfile</a></li>
+		<li><a href="#san_paths__hds_">SAN Paths (HDS)</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#limitations">LIMITATIONS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#acknowledgments">ACKNOWLEDGMENTS</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>joschyd - yet another watchdog daemon - is watching your systems with the real power of perl.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<h2><a name="unix_linux">Unix/Linux</a></h2>
+<p>joschyd [-h | -c config_file] &amp;</p>
+<p>
+</p>
+<h2><a name="win32">Win32</a></h2>
+<ul>
+<li><strong><a name="item_install_as_a_service_3a">Install as a service:</a></strong><br />
+</li>
+<pre>
+ joschyd --install -c C:/win32app/joschyd/joschyd.conf 
+ net start joschyd</pre>
+<li><strong><a name="item_you_can_pause_and_resume_the_service_with_3a">You can pause and resume the service with:</a></strong><br />
+</li>
+<pre>
+ net pause joschyd
+ net continue joschyd</pre>
+<li><strong><a name="item_to_remove_the_service_from_your_system_2c_stop_und">To remove the service from your system, stop und uninstall it:</a></strong><br />
+</li>
+<pre>
+ net stop joschyd
+ joschyd --remove</pre>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The guiding idea is, that's always the same:
+Processes are to be checked by a command-regex combination,
+logfiles watched for different expressions and
+unthinkable watching needs are to be satisfied.
+In all cases the number of returned hits is to be compared with a threshold and in case of bad results notified to a framework.
+This and a lot of other features are realized:</p>
+<ul>
+<li><strong><a name="item_configuration_2d_and_logfile">Configuration- and Logfile</a></strong><br />
+</li>
+A win.ini-like file is used with one section for the general daemon configuration and with one for each watchjob.
+The daemon is always using a logfile.
+<p></p>
+<li><strong><a name="item_error_hysteresis">Error hysteresis</a></strong><br />
+</li>
+After an incident the watchjob will be suspended for notifications (suspended job).
+if the cause for the problem has been resolved a clearing message is send to the framework.
+<p></p>
+<li><strong><a name="item_boot_cycle_persistence">Boot cycle persistence</a></strong><br />
+</li>
+The current states are permanent stored.
+<p></p>
+<li><strong><a name="item_win32_port">Win32 port</a></strong><br />
+</li>
+Really running as service.
+<p></p>
+<li><strong><a name="item_signal_handling">Signal handling</a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_hup">HUP</a></strong><br />
+</li>
+Reads the reconfiguration file, makes a logfile entry, resets the incident counters and sends a status message.
+<p></p>
+<li><strong><a name="item_int_2c_term">INT, TERM</a></strong><br />
+</li>
+Makes a logfile entry, removes the pidfile and exits.
+<p></p></ul>
+<li><strong><a name="item_debugging">Debugging</a></strong><br />
+</li>
+1 debugging level
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="configfile_directives">CONFIG-FILE DIRECTIVES</a></h1>
+<p>The following directives are provided:</p>
+<p>
+</p>
+<h2><a name="daemon_specific">Daemon specific</a></h2>
+<ul>
+<li><strong><a name="item_admins">admins</a></strong><br />
+</li>
+List of admins (separated by comma or colons) as receipts for status messages, overwritten by job specific values.
+<p></p>
+<li><strong><a name="item_auto_resum">auto_resum</a></strong><br />
+</li>
+Time to auto resume suspended jobs, overwritten by job specific values.
+<p></p>
+<li><strong><a name="item_customer">customer</a></strong><br />
+</li>
+Describes the customer.
+<p></p>
+<li><strong><a name="item_db_file">db_file</a></strong><br />
+</li>
+The optional name of the persistent db file.
+Default is $dirname/.${basename}.db
+<p></p>
+<li><strong><a name="item_debug">debug</a></strong><br />
+</li>
+Level 1 enables a more verbose logging and displaying mode.
+<p></p>
+<li><strong><a name="item_exit">exit</a></strong><br />
+</li>
+Tells the daemon to exit, after reaching max_retries.
+<p></p>
+<li><strong><a name="item_log_file">log_file</a></strong><br />
+</li>
+The optional logfile name.
+Default is /var/adm/syslog.dated/current/${basename}.log
+<p></p>
+<li><strong><a name="item_max_retries">max_retries</a></strong><br />
+</li>
+Number of retries before giving up to watch, overwritten by job specific values.
+<p></p>
+<li><strong><a name="item_pid_fname">pid_fname</a></strong><br />
+</li>
+The optional name of the pid file.
+Default is /var/run/${basename}.pid
+<p></p>
+<li><strong><a name="item_receipts">receipts</a></strong><br />
+</li>
+List of email receipts separated by comma or colons, overwritten by job specific values.
+<p></p>
+<li><strong><a name="item_section_list">section_list</a></strong><br />
+</li>
+List of active sections of watchjobs (strongly recommended).
+<p></p>
+<li><strong><a name="item_sender">sender</a></strong><br />
+</li>
+The email - <code>&quot;From: &quot;</code> - field.
+<p></p>
+<li><strong><a name="item_sleeptime">sleeptime</a></strong><br />
+</li>
+The daemon polling time.
+<p></p>
+<li><strong><a name="item_keepalive">keepalive</a></strong><br />
+</li>
+The daemon keepalive time.
+<p></p>
+<li><strong><a name="item_smtp_server">smtp_server</a></strong><br />
+</li>
+Name of the preferred smtp_server.
+Default is localhost.
+<p></p>
+<li><strong><a name="item_msg_subject">msg_subject</a></strong><br />
+</li>
+Template of notification message subject.
+All global and job specific directives are accessable included by [%  %] (See example below).
+<pre>
+ Dynamically loaded:
+ section
+ severity</pre>
+<pre>
+ Additional directives:
+ datetime
+ hostname
+ user
+ program</pre>
+<p></p>
+<li><strong><a name="item_msg_body">msg_body</a></strong><br />
+</li>
+Template of notification body.
+All global and job specific directives are accessable included by [%  %] (See example below).
+<pre>
+ Dynamically loaded:
+ section
+ severity</pre>
+<pre>
+ Additional directives:
+ datetime
+ hostname
+ user
+ program</pre>
+<p></p>
+<li><strong><a name="item_keepalive_subject">keepalive_subject</a></strong><br />
+</li>
+Template of keepalive message subject.
+All global configuration directives are accessable included by [%  %].
+<pre>
+ Additional directives:
+ datetime
+ hostname
+ user
+ program
+ keepalive_seconds</pre>
+<p></p>
+<li><strong><a name="item_keepalive_body">keepalive_body</a></strong><br />
+</li>
+Template of keepalive message body.
+All global configuration directives are accessable included by [%  %].
+<pre>
+ Additional directives:
+ datetime
+ hostname
+ user
+ program
+ keepalive_seconds</pre>
+<p></p></ul>
+<p>
+</p>
+<h2><a name="job_specific">Job specific</a></h2>
+<ul>
+<li><strong><a name="item_i_3ccommand_3e"><em>command</em></a></strong><br />
+</li>
+<strong>Default type of watchjob!</strong> OS-Command (incl. ssh, rsh !).
+<p></p>
+<li><strong><a name="item_i_3clogfile_3e"><em>logfile</em></a></strong><br />
+</li>
+<strong>Special type of watchjob!</strong> (to use instead of <strong>command</strong>) To watch growing logfiles.
+As exception this kind of watchjob in case of incident will not be suspended (no error hysteresis).
+<p></p>
+<li><strong><a name="item_i_3ceval_3e"><em>eval</em></a></strong><br />
+</li>
+<strong>Special type of watchjob!</strong> (to use instead of <strong>command</strong>). Inserted perlcode will be executed via eval.
+<p></p>
+<li><strong><a name="item_action">action</a></strong><br />
+</li>
+Action in case of reaching the threshold.
+<p></p>
+<li><strong><a name="item_alarm_type">alarm_type</a></strong><br />
+</li>
+type reported to the framework.
+<p></p>
+<li><strong>auto_resum</strong><br />
+</li>
+Time to auto resume suspended jobs.
+<p></p>
+<li><strong><a name="item_description">description</a></strong><br />
+</li>
+Describes the watchjob. Used for the email body.
+<p></p>
+<li><strong>max_retries</strong><br />
+</li>
+Number of retries before giving up to watch, overwrites the global daemon value.
+<p></p>
+<li><strong><a name="item_max_time">max_time</a></strong><br />
+</li>
+Endtime for watching the job.
+format: d:hh:mm:ss, d starts with 0 = Sunday
+<p></p>
+<li><strong><a name="item_min_time">min_time</a></strong><br />
+</li>
+Starttime for watching the job.
+format: d:hh:mm:ss, d starts with 0 = Sunday
+<p></p>
+<li><strong>sleeptime</strong><br />
+</li>
+Job specific polling time. Has to be bigger than daemon sleeptime.
+<p></p>
+<li><strong><a name="item_no_suspend">no_suspend</a></strong><br />
+</li>
+The job has never to be suspend (leaving always active).
+May be used for preparations for another watchjob.
+<p></p>
+<li><strong><a name="item_no_resume">no_resume</a></strong><br />
+</li>
+The job leavs suspended after the first incident.
+May be used to supress iterations of incidents.
+<p></p>
+<li><strong><a name="item_precmd">precmd</a></strong><br />
+</li>
+Command to execute as preparation for the job entry.
+<p></p>
+<li><strong>receipts</strong><br />
+</li>
+List of email receipts separated by comma or colons.
+<p></p>
+<li><strong><a name="item_regex">regex</a></strong><br />
+</li>
+Extended Regular expression for grep'ing the command output.
+<p></p>
+<li><strong><a name="item_andnot">andnot</a></strong><br />
+</li>
+Second negatived Regular expression (only logfile entries).
+<p></p>
+<li><strong><a name="item_threshold">threshold</a></strong><br />
+</li>
+Threshold of hits.
+<p></p>
+<li><strong><a name="item_suspend_delay">suspend_delay</a></strong><br />
+</li>
+After occuring event handling is delayed while this time.
+format: hh:mm:ss
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="diagnostics">DIAGNOSTICS</a></h1>
+<p>In case of incident (reaching the threshold for a job) a log entry and email will be created.</p>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>
+</p>
+<h2><a name="general">General</a></h2>
+<pre>
+ [config]
+ debug            = 0
+ sender           = godfather@foo.com
+ log_file         = joschyd.log
+ sleeptime        = 00:10:00
+ keepalive        = 24:00:00
+ max_retries      = 20
+ section_list     = xemacs
+ exit             = 0
+ msg_body       = &lt;&lt;'EOB'
+ Customer:[% customer %]
+ Date:[% datetime %]
+ Thema:[% section %]
+ Alarmtyp:JOSCHY
+ Severity:[% severity %]
+ Host:[% hostname %]
+ User:[% user %]
+ Description:[% description %]
+ EOB
+ msg_subject    = &lt;&lt;'EOS'
+ [% program %]: [% section %]; [% alarm_type %]; [% hostname %]; [% user %]
+ EOS</pre>
+<p>
+</p>
+<h2><a name="sample_process">Sample Process</a></h2>
+<pre>
+ [xemacs]
+ command          = ps -aef
+ regex            = xemacs
+ red              = &lt; 0
+ min_time         = 07:00:00
+ max_time         = 19:00:00
+ receipts         = alert@foo.com
+ description      = I don't belive it
+ action           = xemacs</pre>
+<p>
+</p>
+<h2><a name="oracle_alert_logfile">Oracle Alert Logfile</a></h2>
+<pre>
+ [alertlog]
+ logfile           = /oracle/IP1/saptrace/background/alert_IP1.log
+ regex             = corrupted|ORA-(00343|00345|00312|00313|00321|27037|00376|01110|1516|1631|1632|1653|1654)
+ red               = &gt; 0
+ description       = Database CORRUPTION detected, very critical !!!</pre>
+<p>
+</p>
+<h2><a name="san_paths__hds_">SAN Paths (HDS)</a></h2>
+<pre>
+ [HDS_SAN_Path]
+ eval             = my (%path, $i); \
+                    @_=split, $path{$_[-1]}++ \
+                    for grep /^00000.+Online/, `/opt/DynamicLinkManager/bin/dlnkmgr view -path`; \
+                    $path{$_} and $path{$_} &lt; 2 and $i++ for keys %path; return $i
+ red              = &gt; 0
+ description      = HDLM problem recognized !</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Currently not known.</p>
+<p>
+</p>
+<hr />
+<h1><a name="limitations">LIMITATIONS</a></h1>
+<pre>
+ Job timeout not wtched at Win32, because the missed alarm service call.
+ Tested (in this order) with I&lt;B&lt;Tru64&gt;&gt;, I&lt;B&lt;Linux&gt;&gt;, I&lt;B&lt;Solaris&gt;&gt;, I&lt;B&lt;Aix&gt;&gt; and I&lt;B&lt;Win32&gt;&gt;.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>The <strong>C</strong>omprhensive <strong>P</strong>erl <strong>A</strong>rchive <strong>N</strong>etwork</p>
+<p><a href="http://search.cpan.org">http://search.cpan.org</a></p>
+<p>for the additional necessarly moduls:</p>
+<ul>
+<li><strong><a name="item_mail_3a_3asender">Mail::Sender</a></strong><br />
+</li>
+<li><strong><a name="item_appconfig">AppConfig</a></strong><br />
+</li>
+<li><strong><a name="item_time_3a_3apiece">Time::Piece</a></strong><br />
+</li>
+<li><strong><a name="item_storable">Storable</a></strong><br />
+</li>
+<li><strong><a name="item_pod_3a_3ausage">Pod::Usage</a></strong><br />
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Frank-Peter Reich, Open Source System Integrations (O3SI)</p>
+<p>
+</p>
+<hr />
+<h1><a name="acknowledgments">ACKNOWLEDGMENTS</a></h1>
+<p>I'd like to thank Larry Wall, Randolph Schwarz, Tom Christiansen, Lincoln D. Stein,
+Gurusamy Sarathy, Gisle Aas and many others for making Perl what it is today,
+not to forget <em><strong>joschy</strong></em>, the strongest watchdog I'm knowing.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright (C) 2001-2008 Open Source System Integrations (O3SI). All Rights Reserved.</p>
+<p>This software is free; you can redistribute it and/or modify it under
+the same terms as Perl itself.</p>
+
+</body>
+
+</html>
